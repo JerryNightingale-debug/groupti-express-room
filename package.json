@@ -1,0 +1,16 @@
+{
+  "name": "groupti-express-room",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GroupTI 4-player online room demo with Node.js + Express + polling",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

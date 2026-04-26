@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GroupTI Online Room</title>
+  <style>
+    :root {
+      --bg: #f5f5f3; --card: #ffffff; --muted: #64748b; --text: #0f172a; --line: #e2e8f0;
+      --soft: #f8fafc; --accent: #111827; --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --radius-xl: 28px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+    button, input, select { font: inherit; }
+    .hidden { display: none !important; }
+    .app { max-width: 1280px; margin: 0 auto; padding: 28px 18px 48px; }
+    .topbar { display: flex; align-items: end; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 26px; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: white; color: var(--muted); border-radius: 999px; padding: 8px 12px; font-size: 12px; box-shadow: var(--shadow); }
+    h1 { margin: 8px 0 10px; font-size: clamp(36px, 5vw, 58px); line-height: 1; letter-spacing: -0.05em; }
+    .subtitle { max-width: 780px; font-size: 15px; line-height: 1.8; color: var(--muted); }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 12px; min-width: min(100%, 560px); }
+    .stat { background: white; border-radius: 22px; padding: 16px; box-shadow: var(--shadow); }
+    .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .stat-value { font-size: 24px; font-weight: 700; }
+    .card { background: var(--card); border-radius: var(--radius-xl); box-shadow: var(--shadow); }
+    .card-body { padding: 28px; }
+    .eyebrow { display: inline-block; background: #f1f5f9; color: var(--muted); border-radius: 999px; font-size: 12px; padding: 7px 11px; margin-bottom: 12px; }
+    .title-lg { margin: 0; font-size: clamp(28px, 3vw, 40px); line-height: 1.1; letter-spacing: -0.04em; }
+    .muted { color: var(--muted); font-size: 14px; line-height: 1.8; }
+    .grid-2 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; }
+    .stack { display: grid; gap: 20px; }
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+    .btn { height: 46px; padding: 0 18px; border-radius: 18px; border: 1px solid var(--line); background: white; color: var(--text); font-weight: 600; cursor: pointer; transition: 0.18s ease; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+    .input, .select { width: 100%; height: 46px; border-radius: 16px; border: 1px solid var(--line); background: white; padding: 0 14px; color: var(--text); outline: none; }
+    .input:focus, .select:focus { border-color: #94a3b8; }
+    .softbox { background: var(--soft); border-radius: 24px; padding: 18px; }
+    .room-grid, .role-grid, .mini-grid, .two-col { display: grid; gap: 14px; }
+    .room-grid, .mini-grid, .two-col, .role-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .seat, .player-chip { border: 1px solid var(--line); border-radius: 20px; background: white; padding: 14px; }
+    .lobby-layout, .quiz-layout, .result-layout, .metrics-layout { display: grid; gap: 20px; }
+    .lobby-layout, .quiz-layout { grid-template-columns: 320px 1fr; }
+    .result-layout { grid-template-columns: 1fr 1.05fr; }
+    .metrics-layout { grid-template-columns: 0.95fr 1.05fr; }
+    .progress-bar { height: 10px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width 0.25s ease; }
+    .player-chip { margin-bottom: 10px; }
+    .player-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .player-chip small, .seat small { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .player-chip.active small { color: #cbd5e1; }
+    .question-box { background: var(--soft); border-radius: 24px; padding: 18px; margin-bottom: 18px; }
+    .question-id { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: #94a3b8; margin-bottom: 8px; }
+    .question-text { font-size: clamp(22px, 3vw, 30px); line-height: 1.45; letter-spacing: -0.02em; }
+    .likert-head { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .likert-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+    .likert-btn { height: 46px; border-radius: 18px; border: 1px solid var(--line); background: white; cursor: pointer; font-weight: 700; }
+    .likert-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .badge-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .badge { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 12px; background: white; color: var(--muted); }
+    .result-title { font-size: clamp(40px, 5vw, 62px); line-height: 1; letter-spacing: -0.05em; margin: 8px 0 14px; }
+    .result-strap { color: var(--muted); font-size: 20px; line-height: 1.5; }
+    .mini-card, .pair-box, .blurb { background: var(--soft); border-radius: 24px; padding: 16px; }
+    .mini-card .label { font-size: 12px; color: var(--muted); }
+    .mini-card .value { font-size: 18px; font-weight: 700; margin-top: 4px; }
+    .tip { background: var(--accent); color: white; border-radius: 24px; padding: 18px; margin-top: 14px; }
+    .metric { margin-bottom: 18px; }
+    .metric-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
+    .bar { height: 12px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 999px; }
+    .canvas-wrap { min-height: 420px; display: flex; align-items: center; justify-content: center; padding: 8px; }
+    #radarCanvas { width: 100%; max-width: 520px; aspect-ratio: 1 / 1; }
+    .role-card .topline { height: 8px; background: var(--accent); border-radius: 24px 24px 0 0; }
+
+    .group-result-hero {
+      margin-top: 18px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: var(--soft);
+    }
+
+    .group-result-hero img {
+      width: 100%;
+      display: block;
+      border-radius: 24px;
+    }
+
+    .role-card-image {
+      width: 100%;
+      display: block;
+      border-radius: 20px;
+      margin: 14px 0;
+      background: var(--soft);
+    }
+    .pill { display: inline-flex; align-items: center; justify-content: center; padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); background: white; font-size: 12px; color: var(--muted); }
+    .axis-list { display: grid; gap: 10px; margin-top: 12px; }
+    .axis-item { display: flex; justify-content: space-between; gap: 12px; }
+    .error { color: #b91c1c; font-size: 13px; margin-top: 10px; }
+    .ok { color: #15803d; font-size: 13px; margin-top: 10px; }
+    @media (max-width: 1100px) {
+      .grid-2, .lobby-layout, .quiz-layout, .result-layout, .metrics-layout { grid-template-columns: 1fr; }
+      .room-grid, .role-grid, .mini-grid, .two-col { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, minmax(130px, 1fr)); min-width: 0; width: 100%; }
+    }
+    @media (max-width: 720px) {
+      .app { padding: 18px 14px 34px; }
+      .card-body { padding: 20px; }
+      .likert-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div>
+        <div class="chip">🌐 GroupTI · Express room edition</div>
+        <h1>GroupTI Online</h1>
+        <div class="subtitle">One player creates a room, four players join with the same code, everyone answers on their own device, and the last finisher automatically triggers the final group result.</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Room Seats</div><div class="stat-value">4</div></div>
+        <div class="stat"><div class="stat-label">Question Count</div><div class="stat-value" id="statQuestionCount">20</div></div>
+        <div class="stat"><div class="stat-label">Polling</div><div class="stat-value">1s</div></div>
+        <div class="stat"><div class="stat-label">Status</div><div class="stat-value" id="statStatus">entry</div></div>
+      </div>
+    </div>
+
+    <section id="screenEntry" class="grid-2">
+      <div class="card"><div class="card-body">
+        <div class="eyebrow">create room</div>
+        <h2 class="title-lg">Host a new 4-player session</h2>
+        <div class="field" style="margin-top:18px;"><label>Group name</label><input id="create_groupName" class="input" value="GroupTI Live Room" /></div>
+        <div class="field"><label>Room type</label><select id="create_roomType" class="select"></select></div>
+        <div class="field"><label>Your name</label><input id="create_playerName" class="input" placeholder="Host name" /></div>
+        <div class="btn-row"><button class="btn primary" id="createRoomBtn">Create room</button></div>
+        <div id="entryCreateMessage"></div>
+      </div></div>
+
+      <div class="card"><div class="card-body">
+        <div class="eyebrow">join room</div>
+        <h2 class="title-lg">Join with a room code</h2>
+        <div class="field" style="margin-top:18px;"><label>Room code</label><input id="join_roomCode" class="input" placeholder="ABCD12" /></div>
+        <div class="field"><label>Your name</label><input id="join_playerName" class="input" placeholder="Your name" /></div>
+        <div class="btn-row"><button class="btn primary" id="joinRoomBtn">Join room</button></div>
+        <div class="softbox" style="margin-top:18px;"><strong>How it works</strong><div class="muted" style="margin-top:8px;">The host creates the room and shares the code. All 4 players open the same webpage, join the same room, and answer at the same time.</div></div>
+        <div id="entryJoinMessage"></div>
+      </div></div>
+    </section>
+
+    <section id="screenLobby" class="lobby-layout hidden">
+      <div class="stack">
+        <div class="card"><div class="card-body">
+          <div class="stat-label">Room code</div>
+          <div class="stat-value" id="lobbyRoomCode">------</div>
+          <div style="margin-top:12px;font-weight:700;" id="lobbyGroupName">GroupTI Live Room</div>
+          <div class="muted" style="font-size:13px;" id="lobbyRoomType">Friend Group</div>
+          <div class="btn-row"><button class="btn" id="copyCodeBtn">Copy code</button><button class="btn" id="leaveRoomBtn">Leave room</button></div>
+        </div></div>
+        <div class="card"><div class="card-body"><div style="font-weight:700;margin-bottom:12px;">Player seats</div><div class="stack" id="seatList"></div></div></div>
+      </div>
+
+      <div class="stack">
+        <div class="card"><div class="card-body">
+          <div class="eyebrow">lobby</div>
+          <h2 class="title-lg">Wait until all 4 players are here</h2>
+          <p class="muted" style="margin-top:12px;">When all seats are filled, the host can start the room. Everybody then answers on their own screen. As soon as the fourth player finishes, the result page appears for everyone.</p>
+          <div class="softbox" style="margin-top:18px;"><strong>Your identity in this room</strong><div class="muted" id="myLobbyIdentity" style="margin-top:8px;"></div></div>
+          <div class="btn-row"><button class="btn primary" id="startRoomBtn" disabled>Start room</button></div>
+          <div id="lobbyMessage" class="muted" style="margin-top:10px;"></div>
+        </div></div>
+        <div class="card"><div class="card-body"><div style="font-weight:700;margin-bottom:12px;">Join progress</div><div class="progress-bar"><div class="progress-fill" id="lobbyJoinFill"></div></div><div class="muted" id="lobbyJoinText" style="margin-top:10px;">0 / 4 joined</div></div></div>
+      </div>
+    </section>
+
+    <section id="screenQuiz" class="quiz-layout hidden">
+      <div class="stack">
+        <div class="card"><div class="card-body">
+          <div class="stat-label">My progress</div>
+          <div class="stat-value" id="quizProgressCount">0 / 20</div>
+          <div class="progress-bar" style="margin-top:14px;"><div class="progress-fill" id="quizProgressFill"></div></div>
+          <div style="margin-top:12px;font-weight:700;" id="quizMyName">Player</div>
+          <div class="muted" style="font-size:13px;" id="quizRoomCode">Room ------</div>
+        </div></div>
+        <div class="card"><div class="card-body"><div style="font-weight:700;margin-bottom:12px;">All players</div><div id="playerChipList"></div></div></div>
+      </div>
+
+      <div class="stack">
+        <div class="card"><div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+            <div><div class="stat-label">Now answering</div><div style="font-size:30px;font-weight:700;letter-spacing:-0.04em;" id="quizQuestionCounter">Question 1 / 20</div></div>
+            <div class="softbox" style="padding:10px 14px;border-radius:18px;" id="quizDimensionTag">signal</div>
+          </div>
+          <div class="question-box"><div class="question-id">prompt</div><div class="question-text" id="questionText">Question text</div></div>
+          <div class="likert-head"><span>strongly disagree</span><span>strongly agree</span></div>
+          <div class="likert-grid" id="likertGrid"></div>
+          <div class="badge-row" id="quizBadges"></div>
+        </div></div>
+        <div class="btn-row"><button class="btn" id="prevQuestionBtn">Previous</button><button class="btn primary" id="nextQuestionBtn">Next</button><button class="btn" id="finishBtn" disabled>Finish my answers</button></div>
+        <div class="card"><div class="card-body"><div style="font-weight:700;margin-bottom:10px;">Why this version is simple</div><div class="muted">There is no Firebase and no database setup. The server keeps room data in memory, and each browser polls the room state once per second.</div></div></div>
+      </div>
+    </section>
+
+    <section id="screenResult" class="hidden">
+      <div class="result-layout">
+        <div class="card"><div class="card-body">
+          <div class="eyebrow" id="resultRoomType">Friend Group</div>
+          <div class="stat-label" style="text-transform:uppercase;letter-spacing:0.18em;">Your group type</div>
+          <div class="result-title" id="resultTypeTitle">Hot Mess</div>
+          <div class="result-strap" id="resultStrap">You like each other. The system does not exist.</div>
+          <p class="muted" id="resultDesc" style="margin-top:16px;"></p>
+          <div id="groupResultHero" class="group-result-hero"></div>
+
+          <div class="mini-grid" style="margin-top:24px;">
+            <div class="mini-card"><div class="label">Top carrier</div><div class="value" id="topCarrierName"></div><div class="muted" style="font-size:13px;margin-top:4px;" id="topCarrierRole"></div></div>
+            <div class="mini-card"><div class="label">Soft landing energy</div><div class="value" id="softLandingName"></div><div class="muted" style="font-size:13px;margin-top:4px;" id="softLandingRole"></div></div>
+          </div>
+
+          <div class="two-col" style="margin-top:16px;">
+            <div class="card"><div class="card-body" style="padding:18px;"><div style="font-weight:700;margin-bottom:8px;">What works</div><div class="muted" id="resultWorks"></div></div></div>
+            <div class="card"><div class="card-body" style="padding:18px;"><div style="font-weight:700;margin-bottom:8px;">What breaks</div><div class="muted" id="resultBreaks"></div></div></div>
+          </div>
+
+          <div class="tip"><div style="text-transform:uppercase;letter-spacing:0.18em;font-size:11px;color:#cbd5e1;">survival tip</div><div id="resultTip" style="margin-top:8px;line-height:1.8;"></div></div>
+        </div></div>
+
+        <div class="card"><div class="card-body" style="height:100%;"><div style="font-size:28px;font-weight:700;letter-spacing:-0.04em;margin-bottom:8px;">Average group profile</div><div class="canvas-wrap"><canvas id="radarCanvas" width="520" height="520"></canvas></div></div></div>
+      </div>
+
+      <div class="metrics-layout">
+        <div class="card"><div class="card-body"><div style="font-size:28px;font-weight:700;letter-spacing:-0.04em;margin-bottom:18px;">Group metrics</div><div id="metricsList"></div></div></div>
+        <div class="card"><div class="card-body">
+          <div style="font-size:28px;font-weight:700;letter-spacing:-0.04em;margin-bottom:18px;">Pair dynamics + scenario</div>
+          <div class="pair-box"><div style="font-weight:700;margin-bottom:6px;">Best sync</div><div id="bestPairText"></div><div class="muted" id="bestPairDesc" style="margin-top:8px;"></div></div>
+          <div class="pair-box"><div style="font-weight:700;margin-bottom:6px;">Potential friction</div><div id="frictionPairText"></div><div class="muted" id="frictionPairDesc" style="margin-top:8px;"></div></div>
+          <div class="card"><div class="card-body" style="padding:18px;"><div style="font-weight:700;margin-bottom:8px;">If this group had to do the thing</div><div class="muted" id="scenarioText"></div></div></div>
+        </div></div>
+      </div>
+
+      <div class="role-grid" id="roleGrid"></div>
+      <div class="btn-row"><button class="btn" id="copyRoomCodeAgainBtn">Copy room code</button><button class="btn" id="newRoomBtn">Back to entry</button></div>
+    </section>
+  </div>
+
+  <script>
+    const SESSION_KEY = 'groupti-express-session';
+    let roomTypes = [];
+    let questions = [];
+    let currentRoomCode = null;
+    let currentPlayerId = null;
+    let currentRoom = null;
+    let localQuestionIndex = 0;
+    let pollTimer = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(text) { $('statStatus').textContent = text; }
+    function saveSession() { localStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: currentRoomCode, playerId: currentPlayerId, questionIndex: localQuestionIndex })); }
+    function loadSession() { const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}'); currentRoomCode = saved.roomCode || null; currentPlayerId = saved.playerId || null; localQuestionIndex = saved.questionIndex || 0; }
+    function clearSession() { localStorage.removeItem(SESSION_KEY); currentRoomCode = null; currentPlayerId = null; currentRoom = null; localQuestionIndex = 0; stopPolling(); }
+    function showMessage(id, message, type = 'error') { const el = $(id); el.className = type; el.textContent = message; }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Request failed.');
+      return data;
+    }
+
+    function showScreen(screen) {
+      ['screenEntry', 'screenLobby', 'screenQuiz', 'screenResult'].forEach((id) => $(id).classList.add('hidden'));
+      $(screen).classList.remove('hidden');
+      setStatus(screen.replace('screen', '').toLowerCase());
+    }
+
+    function startPolling() { stopPolling(); pollRoom(); pollTimer = setInterval(pollRoom, 1000); }
+    function stopPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
+
+    async function loadMeta() {
+      const data = await api('/api/meta');
+      roomTypes = data.roomTypes;
+      questions = data.questions;
+      $('statQuestionCount').textContent = data.questions.length;
+      $('create_roomType').innerHTML = roomTypes.map((rt) => `<option value="${rt.key}">${rt.label}</option>`).join('');
+    }
+
+    async function createRoom() {
+      try {
+        const data = await api('/api/rooms/create', { method: 'POST', body: JSON.stringify({ groupName: $('create_groupName').value.trim(), roomType: $('create_roomType').value, playerName: $('create_playerName').value.trim() }) });
+        currentRoomCode = data.roomCode; currentPlayerId = data.playerId; currentRoom = data.room; localQuestionIndex = 0; saveSession();
+        showScreen('screenLobby'); renderLobby(); startPolling();
+      } catch (error) { showMessage('entryCreateMessage', error.message); }
+    }
+
+    async function joinRoom() {
+      try {
+        const data = await api('/api/rooms/join', { method: 'POST', body: JSON.stringify({ roomCode: $('join_roomCode').value.trim().toUpperCase(), playerName: $('join_playerName').value.trim() }) });
+        currentRoomCode = data.roomCode; currentPlayerId = data.playerId; currentRoom = data.room; localQuestionIndex = 0; saveSession();
+        showScreen('screenLobby'); renderLobby(); startPolling();
+      } catch (error) { showMessage('entryJoinMessage', error.message); }
+    }
+
+    async function pollRoom() {
+      if (!currentRoomCode || !currentPlayerId) return;
+      try {
+        currentRoom = await api(`/api/rooms/${currentRoomCode}?playerId=${currentPlayerId}`);
+        if (currentRoom.status === 'lobby') { showScreen('screenLobby'); renderLobby(); }
+        else if (currentRoom.status === 'quiz') { showScreen('screenQuiz'); renderQuiz(); }
+        else if (currentRoom.status === 'result') { showScreen('screenResult'); renderResult(); }
+      } catch {
+        clearSession(); showScreen('screenEntry');
+      }
+    }
+
+    async function startRoom() {
+      try { await api('/api/rooms/start', { method: 'POST', body: JSON.stringify({ roomCode: currentRoomCode, playerId: currentPlayerId }) }); }
+      catch (error) { showMessage('lobbyMessage', error.message); }
+    }
+
+    async function saveAnswer(score) {
+      const question = questions[localQuestionIndex];
+      try {
+        await api('/api/rooms/answer', { method: 'POST', body: JSON.stringify({ roomCode: currentRoomCode, playerId: currentPlayerId, questionId: question.id, score }) });
+        await pollRoom();
+      } catch (error) { alert(error.message); }
+    }
+
+    async function finishAnswers() {
+      try {
+        await api('/api/rooms/finish', { method: 'POST', body: JSON.stringify({ roomCode: currentRoomCode, playerId: currentPlayerId }) });
+        await pollRoom();
+      } catch (error) { alert(error.message); }
+    }
+
+    function renderLobby() {
+      $('lobbyRoomCode').textContent = currentRoom.roomCode;
+      $('lobbyGroupName').textContent = currentRoom.groupName;
+      $('lobbyRoomType').textContent = roomTypes.find((rt) => rt.key === currentRoom.roomType)?.label || currentRoom.roomType;
+      $('myLobbyIdentity').textContent = `You are ${currentRoom.me?.name || 'Unknown'} in room ${currentRoom.roomCode}.`;
+      $('copyCodeBtn').onclick = () => navigator.clipboard.writeText(currentRoom.roomCode);
+      $('lobbyJoinFill').style.width = `${(currentRoom.players.length / currentRoom.maxPlayers) * 100}%`;
+      $('lobbyJoinText').textContent = `${currentRoom.players.length} / ${currentRoom.maxPlayers} joined`;
+      $('seatList').innerHTML = Array.from({ length: currentRoom.maxPlayers }, (_, i) => {
+        const player = currentRoom.players[i];
+        return player
+          ? `<div class="seat"><strong>${escapeHtml(player.name)}</strong><small>${player.isHost ? 'host' : 'player'}</small></div>`
+          : `<div class="seat"><strong>Seat ${i + 1}</strong><small>waiting for player</small></div>`;
+      }).join('');
+      const isHost = currentRoom.hostId === currentPlayerId;
+      $('startRoomBtn').disabled = !(isHost && currentRoom.players.length === currentRoom.maxPlayers);
+      $('lobbyMessage').textContent = isHost ? 'You are the host.' : 'Waiting for the host to start.';
+    }
+
+    function renderQuiz() {
+      const me = currentRoom.me;
+      const answerIds = Object.keys(me.answers || {}).map(Number);
+      if (localQuestionIndex >= questions.length) localQuestionIndex = questions.length - 1;
+      if (localQuestionIndex < 0) localQuestionIndex = 0;
+      const firstMissing = questions.findIndex((q) => me.answers[q.id] === undefined);
+      if (firstMissing !== -1 && localQuestionIndex === 0 && me.answers[questions[0].id] !== undefined) localQuestionIndex = firstMissing;
+      saveSession();
+
+      const question = questions[localQuestionIndex];
+      $('quizProgressCount').textContent = `${answerIds.length} / ${questions.length}`;
+      $('quizProgressFill').style.width = `${(answerIds.length / questions.length) * 100}%`;
+      $('quizMyName').textContent = me.name;
+      $('quizRoomCode').textContent = `Room ${currentRoom.roomCode}`;
+      $('quizQuestionCounter').textContent = `Question ${localQuestionIndex + 1} / ${questions.length}`;
+      $('quizDimensionTag').textContent = question.dimension;
+      $('questionText').textContent = question.text;
+      const currentValue = me.answers[question.id];
+      $('likertGrid').innerHTML = Array.from({ length: 7 }, (_, i) => i + 1).map((n) => `<button class="likert-btn ${currentValue === n ? 'active' : ''}" data-score="${n}">${n}</button>`).join('');
+      document.querySelectorAll('.likert-btn').forEach((btn) => btn.onclick = () => saveAnswer(Number(btn.dataset.score)));
+      $('quizBadges').innerHTML = `<div class="badge">${question.dimension}</div>${question.reverse ? '<div class="badge">reverse scored</div>' : ''}`;
+      $('playerChipList').innerHTML = currentRoom.players.map((player) => `<div class="player-chip ${player.id === currentPlayerId ? 'active' : ''}"><strong>${escapeHtml(player.name)}</strong><small>${player.progress}/20 answered · ${player.completed ? 'finished' : 'in progress'}</small></div>`).join('');
+      $('prevQuestionBtn').disabled = localQuestionIndex === 0;
+      $('nextQuestionBtn').disabled = currentValue === undefined || localQuestionIndex === questions.length - 1;
+      $('finishBtn').disabled = answerIds.length < questions.length || me.completed;
+    }
+
+    function renderResult() {
+      const result = currentRoom.result;
+
+      $('resultRoomType').textContent = roomTypes.find((rt) => rt.key === currentRoom.roomType)?.label || currentRoom.roomType;
+      $('resultTypeTitle').textContent = result.type.title;
+      $('resultStrap').textContent = result.type.strap;
+      $('resultDesc').textContent = result.type.desc;
+
+      $('groupResultHero').innerHTML = result.type.image
+        ? `<img src="${result.type.image}" alt="${escapeHtml(result.type.title)}">`
+        : '';
+
+      $('topCarrierName').textContent = result.topCarrier.name;
+      $('topCarrierRole').textContent = result.topCarrier.role.title;
+      $('softLandingName').textContent = result.softLanding.name;
+      $('softLandingRole').textContent = result.softLanding.role.title;
+
+      $('resultWorks').innerHTML = result.type.works.map((x) => `• ${x}`).join('<br>');
+      $('resultBreaks').innerHTML = result.type.breaks.map((x) => `• ${x}`).join('<br>');
+      $('resultTip').textContent = result.type.tip;
+      $('scenarioText').textContent = result.scenario;
+
+      if (result.bestPair) {
+        $('bestPairText').innerHTML = `<strong>${escapeHtml(result.bestPair.a.name)}</strong> × <strong>${escapeHtml(result.bestPair.b.name)}</strong>`;
+        $('bestPairDesc').textContent = 'Their pacing and response style line up unusually well. They make coordination look easier than it probably is.';
+      }
+
+      if (result.frictionPair) {
+        $('frictionPairText').innerHTML = `<strong>${escapeHtml(result.frictionPair.a.name)}</strong> × <strong>${escapeHtml(result.frictionPair.b.name)}</strong>`;
+        $('frictionPairDesc').textContent = 'This pairing may clash on pace, control, or how much structure a normal human needs before proceeding.';
+      }
+
+      $('metricsList').innerHTML = [
+        ['Chaos', result.metrics.chaos],
+        ['Sync', result.metrics.sync],
+        ['Follow-Through', result.metrics.followThrough],
+        ['Emotional Range', result.metrics.emotionalRange],
+        ['Deadline Survival', result.metrics.deadlineSurvival],
+        ['Carry Imbalance', result.metrics.carryIndex]
+      ]
+        .map(([label, value]) => `
+          <div class="metric">
+            <div class="metric-head"><span>${label}</span><strong>${value}</strong></div>
+            <div class="bar"><span style="width:${value}%"></span></div>
+          </div>
+        `)
+        .join('');
+
+      $('roleGrid').innerHTML = result.profiles.map((profile) => `
+        <div class="card role-card">
+          <div class="topline"></div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+              <div>
+                <div style="font-size:20px;font-weight:700;">${escapeHtml(profile.name)}</div>
+                <div class="muted" style="font-size:12px;">${profile.role.title}</div>
+              </div>
+              <div class="pill">carry ${profile.carry}</div>
+            </div>
+
+            ${profile.role.image ? `<img class="role-card-image" src="${profile.role.image}" alt="${escapeHtml(profile.role.title)}">` : ''}
+
+            <div class="blurb">${profile.role.blurb}</div>
+
+            <div class="axis-list">
+              <div class="axis-item"><span class="muted">Signal</span><strong>${profile.labels.signal}</strong></div>
+              <div class="axis-item"><span class="muted">Decision</span><strong>${profile.labels.brain}</strong></div>
+              <div class="axis-item"><span class="muted">Structure</span><strong>${profile.labels.grid}</strong></div>
+              <div class="axis-item"><span class="muted">Group style</span><strong>${profile.labels.driver}</strong></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      $('copyRoomCodeAgainBtn').onclick = () => navigator.clipboard.writeText(currentRoom.roomCode);
+
+      drawRadar(result.radar);
+    }
+
+
+    function drawRadar(data) {
+      const canvas = $('radarCanvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      const radius = Math.min(w, h) * 0.33;
+      const levels = 4;
+      const points = data.length;
+      ctx.strokeStyle = '#d8dee8';
+      ctx.lineWidth = 1;
+      for (let level = 1; level <= levels; level++) {
+        const r = radius * (level / levels);
+        ctx.beginPath();
+        for (let i = 0; i < points; i++) {
+          const angle = -Math.PI / 2 + (Math.PI * 2 * i / points);
+          const x = cx + Math.cos(angle) * r;
+          const y = cy + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+      for (let i = 0; i < points; i++) {
+        const angle = -Math.PI / 2 + (Math.PI * 2 * i / points);
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      data.forEach((d, i) => {
+        const angle = -Math.PI / 2 + (Math.PI * 2 * i / points);
+        const r = radius * (d.score / 100);
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(100, 116, 139, 0.24)';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+      ctx.font = '600 16px Inter, sans-serif';
+      ctx.fillStyle = '#475569';
+      data.forEach((d, i) => {
+        const angle = -Math.PI / 2 + (Math.PI * 2 * i / points);
+        const labelRadius = radius + 34;
+        const x = cx + Math.cos(angle) * labelRadius;
+        const y = cy + Math.sin(angle) * labelRadius;
+        ctx.textAlign = Math.abs(Math.cos(angle)) < 0.2 ? 'center' : (Math.cos(angle) > 0 ? 'left' : 'right');
+        ctx.textBaseline = Math.abs(Math.sin(angle)) < 0.2 ? 'middle' : (Math.sin(angle) > 0 ? 'top' : 'bottom');
+        ctx.fillText(d.label, x, y);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function wireEvents() {
+      $('createRoomBtn').onclick = createRoom;
+      $('joinRoomBtn').onclick = joinRoom;
+      $('startRoomBtn').onclick = startRoom;
+      $('leaveRoomBtn').onclick = () => { clearSession(); showScreen('screenEntry'); };
+      $('prevQuestionBtn').onclick = () => { localQuestionIndex = Math.max(0, localQuestionIndex - 1); saveSession(); renderQuiz(); };
+      $('nextQuestionBtn').onclick = () => { localQuestionIndex = Math.min(questions.length - 1, localQuestionIndex + 1); saveSession(); renderQuiz(); };
+      $('finishBtn').onclick = finishAnswers;
+      $('newRoomBtn').onclick = () => { clearSession(); showScreen('screenEntry'); };
+    }
+
+    async function boot() {
+      loadSession();
+      await loadMeta();
+      wireEvents();
+      if (currentRoomCode && currentPlayerId) startPolling();
+      else showScreen('screenEntry');
+    }
+
+    boot();
+  </script>
+</body>
+</html>
